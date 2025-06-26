@@ -62,9 +62,12 @@ export function createDatabase(): Kysely<DatabaseSchema> {
   const dbUrl = process.env.DATABASE_URL || 'file:./dev.db'
 
   if (dbUrl.startsWith('postgres')) {
-    // PostgreSQL dialect
+    // PostgreSQL dialect with SSL support
     const dialect = new PostgresDialect({
-      pool: new Pool({ connectionString: dbUrl })
+      pool: new Pool({ 
+        connectionString: dbUrl,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      })
     })
     return new Kysely<DatabaseSchema>({ dialect })
   } else {
