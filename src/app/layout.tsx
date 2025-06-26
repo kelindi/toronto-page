@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Toronto Profiles",
-  description: "Discover creative professionals in Toronto",
+  title: "DISCOVER c/o TORONTO™",
+  description: "A directory of creators, builders and innovators in Toronto",
 };
 
 export default function RootLayout({
