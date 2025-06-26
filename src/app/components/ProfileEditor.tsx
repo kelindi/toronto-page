@@ -106,7 +106,7 @@ export default function ProfileEditor({ profile, isOpen, onClose }: ProfileEdito
             </div>
 
             <div className="form-group">
-              <label htmlFor="bio">Short Bio </label>
+              <label htmlFor="bio">Short Bio *</label>
               <textarea
                 id="bio"
                 name="bio"
@@ -120,7 +120,7 @@ export default function ProfileEditor({ profile, isOpen, onClose }: ProfileEdito
             </div>
 
             <div className="form-group">
-              <label htmlFor="interests">Interests </label>
+              <label htmlFor="interests">Interests *</label>
               <input
                 type="text"
                 id="interests"
@@ -147,7 +147,7 @@ export default function ProfileEditor({ profile, isOpen, onClose }: ProfileEdito
             </div>
 
             <div className="form-group">
-              <label htmlFor="currentProject">What I&apos;m Working On </label>
+              <label htmlFor="currentProject">What I&apos;m Working On *</label>
               <textarea
                 id="currentProject"
                 name="currentProject"
