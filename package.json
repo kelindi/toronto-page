@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lexgen": "lex gen-ts-obj src/lexicon/lexicons.ts lexicons/*.json && lex gen-api --yes src/lexicon/types lexicons/*.json"
+    "lexgen": "npx @atproto/lex-cli gen-ts-obj lexicons/*.json > src/lexicon/lexicons.ts && npx @atproto/lex-cli gen-api --yes src/lexicon/ lexicons/*.json"
   },
   "dependencies": {
     "@atproto/api": "^0.13.4",

@@ -1,130 +1,218 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
 import {
-  createServer as createXrpcServer,
-  Server as XrpcServer,
-  Options as XrpcOptions,
-  AuthVerifier,
-  StreamAuthVerifier,
-} from '@atproto/xrpc-server'
-import { schemas } from './lexicons'
+  XrpcClient,
+  type FetchHandler,
+  type FetchHandlerOptions,
+} from '@atproto/xrpc'
+import { schemas } from './lexicons.js'
+import { CID } from 'multiformats/cid'
+import { type OmitKey, type Un$Typed } from './util.js'
+import * as IncTorontoDiscoverBetaProfile from './types/inc/toronto/discover/beta/profile.js'
+import * as XyzStatusphereStatus from './types/xyz/statusphere/status.js'
 
-export function createServer(options?: XrpcOptions): Server {
-  return new Server(options)
-}
+export * as IncTorontoDiscoverBetaProfile from './types/inc/toronto/discover/beta/profile.js'
+export * as XyzStatusphereStatus from './types/xyz/statusphere/status.js'
 
-export class Server {
-  xrpc: XrpcServer
-  app: AppNS
+export class AtpBaseClient extends XrpcClient {
+  inc: IncNS
   xyz: XyzNS
-  com: ComNS
 
-  constructor(options?: XrpcOptions) {
-    this.xrpc = createXrpcServer(schemas, options)
-    this.app = new AppNS(this)
+  constructor(options: FetchHandler | FetchHandlerOptions) {
+    super(options, schemas)
+    this.inc = new IncNS(this)
     this.xyz = new XyzNS(this)
-    this.com = new ComNS(this)
+  }
+
+  /** @deprecated use `this` instead */
+  get xrpc(): XrpcClient {
+    return this
   }
 }
 
-export class AppNS {
-  _server: Server
-  bsky: AppBskyNS
+export class IncNS {
+  _client: XrpcClient
+  toronto: IncTorontoNS
 
-  constructor(server: Server) {
-    this._server = server
-    this.bsky = new AppBskyNS(server)
+  constructor(client: XrpcClient) {
+    this._client = client
+    this.toronto = new IncTorontoNS(client)
   }
 }
 
-export class AppBskyNS {
-  _server: Server
-  actor: AppBskyActorNS
+export class IncTorontoNS {
+  _client: XrpcClient
+  discover: IncTorontoDiscoverNS
 
-  constructor(server: Server) {
-    this._server = server
-    this.actor = new AppBskyActorNS(server)
+  constructor(client: XrpcClient) {
+    this._client = client
+    this.discover = new IncTorontoDiscoverNS(client)
   }
 }
 
-export class AppBskyActorNS {
-  _server: Server
+export class IncTorontoDiscoverNS {
+  _client: XrpcClient
+  beta: IncTorontoDiscoverBetaNS
 
-  constructor(server: Server) {
-    this._server = server
+  constructor(client: XrpcClient) {
+    this._client = client
+    this.beta = new IncTorontoDiscoverBetaNS(client)
+  }
+}
+
+export class IncTorontoDiscoverBetaNS {
+  _client: XrpcClient
+  profile: IncTorontoDiscoverBetaProfileRecord
+
+  constructor(client: XrpcClient) {
+    this._client = client
+    this.profile = new IncTorontoDiscoverBetaProfileRecord(client)
+  }
+}
+
+export class IncTorontoDiscoverBetaProfileRecord {
+  _client: XrpcClient
+
+  constructor(client: XrpcClient) {
+    this._client = client
+  }
+
+  async list(
+    params: OmitKey<ComAtprotoRepoListRecords.QueryParams, 'collection'>,
+  ): Promise<{
+    cursor?: string
+    records: { uri: string; value: IncTorontoDiscoverBetaProfile.Record }[]
+  }> {
+    const res = await this._client.call('com.atproto.repo.listRecords', {
+      collection: 'inc.toronto.discover.beta.profile',
+      ...params,
+    })
+    return res.data
+  }
+
+  async get(
+    params: OmitKey<ComAtprotoRepoGetRecord.QueryParams, 'collection'>,
+  ): Promise<{
+    uri: string
+    cid: string
+    value: IncTorontoDiscoverBetaProfile.Record
+  }> {
+    const res = await this._client.call('com.atproto.repo.getRecord', {
+      collection: 'inc.toronto.discover.beta.profile',
+      ...params,
+    })
+    return res.data
+  }
+
+  async create(
+    params: OmitKey<
+      ComAtprotoRepoCreateRecord.InputSchema,
+      'collection' | 'record'
+    >,
+    record: Un$Typed<IncTorontoDiscoverBetaProfile.Record>,
+    headers?: Record<string, string>,
+  ): Promise<{ uri: string; cid: string }> {
+    const collection = 'inc.toronto.discover.beta.profile'
+    const res = await this._client.call(
+      'com.atproto.repo.createRecord',
+      undefined,
+      { collection, ...params, record: { ...record, $type: collection } },
+      { encoding: 'application/json', headers },
+    )
+    return res.data
+  }
+
+  async delete(
+    params: OmitKey<ComAtprotoRepoDeleteRecord.InputSchema, 'collection'>,
+    headers?: Record<string, string>,
+  ): Promise<void> {
+    await this._client.call(
+      'com.atproto.repo.deleteRecord',
+      undefined,
+      { collection: 'inc.toronto.discover.beta.profile', ...params },
+      { headers },
+    )
   }
 }
 
 export class XyzNS {
-  _server: Server
+  _client: XrpcClient
   statusphere: XyzStatusphereNS
 
-  constructor(server: Server) {
-    this._server = server
-    this.statusphere = new XyzStatusphereNS(server)
+  constructor(client: XrpcClient) {
+    this._client = client
+    this.statusphere = new XyzStatusphereNS(client)
   }
 }
 
 export class XyzStatusphereNS {
-  _server: Server
+  _client: XrpcClient
+  status: XyzStatusphereStatusRecord
 
-  constructor(server: Server) {
-    this._server = server
+  constructor(client: XrpcClient) {
+    this._client = client
+    this.status = new XyzStatusphereStatusRecord(client)
   }
 }
 
-export class ComNS {
-  _server: Server
-  atproto: ComAtprotoNS
+export class XyzStatusphereStatusRecord {
+  _client: XrpcClient
 
-  constructor(server: Server) {
-    this._server = server
-    this.atproto = new ComAtprotoNS(server)
+  constructor(client: XrpcClient) {
+    this._client = client
+  }
+
+  async list(
+    params: OmitKey<ComAtprotoRepoListRecords.QueryParams, 'collection'>,
+  ): Promise<{
+    cursor?: string
+    records: { uri: string; value: XyzStatusphereStatus.Record }[]
+  }> {
+    const res = await this._client.call('com.atproto.repo.listRecords', {
+      collection: 'xyz.statusphere.status',
+      ...params,
+    })
+    return res.data
+  }
+
+  async get(
+    params: OmitKey<ComAtprotoRepoGetRecord.QueryParams, 'collection'>,
+  ): Promise<{ uri: string; cid: string; value: XyzStatusphereStatus.Record }> {
+    const res = await this._client.call('com.atproto.repo.getRecord', {
+      collection: 'xyz.statusphere.status',
+      ...params,
+    })
+    return res.data
+  }
+
+  async create(
+    params: OmitKey<
+      ComAtprotoRepoCreateRecord.InputSchema,
+      'collection' | 'record'
+    >,
+    record: Un$Typed<XyzStatusphereStatus.Record>,
+    headers?: Record<string, string>,
+  ): Promise<{ uri: string; cid: string }> {
+    const collection = 'xyz.statusphere.status'
+    const res = await this._client.call(
+      'com.atproto.repo.createRecord',
+      undefined,
+      { collection, ...params, record: { ...record, $type: collection } },
+      { encoding: 'application/json', headers },
+    )
+    return res.data
+  }
+
+  async delete(
+    params: OmitKey<ComAtprotoRepoDeleteRecord.InputSchema, 'collection'>,
+    headers?: Record<string, string>,
+  ): Promise<void> {
+    await this._client.call(
+      'com.atproto.repo.deleteRecord',
+      undefined,
+      { collection: 'xyz.statusphere.status', ...params },
+      { headers },
+    )
   }
 }
-
-export class ComAtprotoNS {
-  _server: Server
-  repo: ComAtprotoRepoNS
-
-  constructor(server: Server) {
-    this._server = server
-    this.repo = new ComAtprotoRepoNS(server)
-  }
-}
-
-export class ComAtprotoRepoNS {
-  _server: Server
-
-  constructor(server: Server) {
-    this._server = server
-  }
-}
-
-type SharedRateLimitOpts<T> = {
-  name: string
-  calcKey?: (ctx: T) => string
-  calcPoints?: (ctx: T) => number
-}
-type RouteRateLimitOpts<T> = {
-  durationMs: number
-  points: number
-  calcKey?: (ctx: T) => string
-  calcPoints?: (ctx: T) => number
-}
-type HandlerOpts = { blobLimit?: number }
-type HandlerRateLimitOpts<T> = SharedRateLimitOpts<T> | RouteRateLimitOpts<T>
-type ConfigOf<Auth, Handler, ReqCtx> =
-  | Handler
-  | {
-      auth?: Auth
-      opts?: HandlerOpts
-      rateLimit?: HandlerRateLimitOpts<ReqCtx> | HandlerRateLimitOpts<ReqCtx>[]
-      handler: Handler
-    }
-type ExtractAuth<AV extends AuthVerifier | StreamAuthVerifier> = Extract<
-  Awaited<ReturnType<AV>>,
-  { credentials: unknown }
->

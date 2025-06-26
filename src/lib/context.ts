@@ -9,9 +9,11 @@ import {
 import { createIngester } from './ingester'
 import { createClient } from '../auth/client'
 import { createStatusStore, type StatusStore } from './status-store'
+import { createProfileStore, type ProfileStore } from './profile-store'
 
 export type AppContext = {
   statusStore: StatusStore
+  profileStore: ProfileStore
   ingester: Firehose
   logger: pino.Logger
   oauthClient: OAuthClient
@@ -25,10 +27,11 @@ async function createContext(): Promise<AppContext> {
   const oauthClient = await createClient()
   const baseIdResolver = createIdResolver()
   const statusStore = createStatusStore()
+  const profileStore = createProfileStore()
   const ingester = createIngester(statusStore, baseIdResolver)
   const resolver = createBidirectionalResolver(baseIdResolver)
   ingester.start()
-  return { statusStore, ingester, logger, oauthClient, resolver }
+  return { statusStore, profileStore, ingester, logger, oauthClient, resolver }
 }
 
 export async function getContext(): Promise<AppContext> {

@@ -6,6 +6,7 @@ import Database from 'better-sqlite3'
 export interface DatabaseSchema {
   sessions: SessionTable
   statuses: StatusTable
+  profile: ProfileTable
 }
 
 export interface SessionTable {
@@ -20,6 +21,40 @@ export interface StatusTable {
   status: string
   created_at: string
   indexed_at: string
+}
+
+export interface ProfileTable {
+  uri: string
+  author_did: string
+  name: string
+  bio: string
+  interests: string // JSON string array
+  neighbourhood: string | null
+  current_project: string
+  twitter_url: string | null
+  instagram_url: string | null
+  github_url: string | null
+  linkedin_url: string | null
+  website_url: string | null
+  created_at: string
+  updated_at: string | null
+}
+
+export interface Profile {
+  uri: string
+  authorDid: string
+  name: string
+  bio: string
+  interests: string[]
+  neighbourhood?: string
+  currentProject: string
+  twitterUrl?: string
+  instagramUrl?: string
+  githubUrl?: string
+  linkedinUrl?: string
+  websiteUrl?: string
+  createdAt: string
+  updatedAt?: string
 }
 
 // Create Kysely database instance
@@ -78,6 +113,34 @@ export async function initializeDatabase(db: Kysely<DatabaseSchema>) {
       .ifNotExists()
       .on('statuses')
       .column('indexed_at')
+      .execute()
+
+    // Create profile table
+    await db.schema
+      .createTable('profile')
+      .ifNotExists()
+      .addColumn('uri', 'text', (col) => col.primaryKey())
+      .addColumn('author_did', 'text', (col) => col.notNull())
+      .addColumn('name', 'text', (col) => col.notNull())
+      .addColumn('bio', 'text', (col) => col.notNull())
+      .addColumn('interests', 'text', (col) => col.notNull())
+      .addColumn('neighbourhood', 'text')
+      .addColumn('current_project', 'text', (col) => col.notNull())
+      .addColumn('twitter_url', 'text')
+      .addColumn('instagram_url', 'text')
+      .addColumn('github_url', 'text')
+      .addColumn('linkedin_url', 'text')
+      .addColumn('website_url', 'text')
+      .addColumn('created_at', 'text', (col) => col.notNull())
+      .addColumn('updated_at', 'text')
+      .execute()
+
+    // Create index on author_did for faster profile lookups
+    await db.schema
+      .createIndex('idx_profile_author_did')
+      .ifNotExists()
+      .on('profile')
+      .column('author_did')
       .execute()
 
   } catch (error) {

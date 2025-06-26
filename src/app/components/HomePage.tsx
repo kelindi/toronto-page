@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import ProfileEditor, { type TorontoProfile } from './ProfileEditor'
 
 export type Status = {
   uri: string
@@ -16,6 +17,7 @@ interface HomePageProps {
   didHandleMap: Record<string, string>
   profile?: { displayName?: string }
   myStatus?: Status
+  myProfile?: TorontoProfile
   currentUserDid?: string
 }
 
@@ -32,9 +34,11 @@ export default function HomePage({
   didHandleMap,
   profile,
   myStatus,
+  myProfile,
   currentUserDid,
 }: HomePageProps) {
   const router = useRouter()
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false)
 
   const handleStatusClick = async (status: string) => {
     try {
@@ -64,7 +68,11 @@ export default function HomePage({
       <Header />
       
       <div className="container">
-        <UserSessionCard profile={profile} />
+        <UserSessionCard 
+          profile={profile} 
+          torontoProfile={myProfile}
+          onEditProfile={() => setIsProfileEditorOpen(true)}
+        />
         <StatusSelector 
           statusOptions={STATUS_OPTIONS}
           currentStatus={myStatus?.status}
@@ -76,6 +84,12 @@ export default function HomePage({
           currentUserDid={currentUserDid}
         />
       </div>
+      
+      <ProfileEditor
+        profile={myProfile}
+        isOpen={isProfileEditorOpen}
+        onClose={() => setIsProfileEditorOpen(false)}
+      />
     </div>
   )
 }
@@ -89,7 +103,15 @@ function Header() {
   )
 }
 
-function UserSessionCard({ profile }: { profile?: { displayName?: string } }) {
+function UserSessionCard({ 
+  profile,
+  torontoProfile,
+  onEditProfile
+}: { 
+  profile?: { displayName?: string }
+  torontoProfile?: TorontoProfile
+  onEditProfile: () => void
+}) {
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -131,9 +153,29 @@ function UserSessionCard({ profile }: { profile?: { displayName?: string } }) {
       <div className="card">
         <div className="session-form">
           <div>
-            Hi, <strong>{profile.displayName || 'friend'}</strong>. What&apos;s your status today?
+            Hi, <strong>{profile.displayName || torontoProfile?.name || 'friend'}</strong>. What&apos;s your status today?
+            {torontoProfile && (
+              <div className="toronto-profile-preview">
+                <p><strong>{torontoProfile.name}</strong> {torontoProfile.neighbourhood && `• ${torontoProfile.neighbourhood}`}</p>
+                <p>{torontoProfile.bio}</p>
+                <p><strong>Working on:</strong> {torontoProfile.currentProject}</p>
+                <div className="interests">
+                  {torontoProfile.interests.slice(0, 3).map((interest, i) => (
+                    <span key={i} className="interest-tag">{interest}</span>
+                  ))}
+                  {torontoProfile.interests.length > 3 && <span className="interest-tag">+{torontoProfile.interests.length - 3} more</span>}
+                </div>
+              </div>
+            )}
           </div>
           <div>
+            <button 
+              type="button" 
+              onClick={onEditProfile}
+              style={{ marginRight: '8px' }}
+            >
+              {torontoProfile ? 'Edit Profile' : 'Create Profile'}
+            </button>
             <button 
               type="button" 
               onClick={handleLogout}

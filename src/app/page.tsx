@@ -31,6 +31,10 @@ export default async function Page() {
     ? await ctx.statusStore.findLatestForDid(agent.assertDid)
     : undefined
 
+  const myProfile = agent
+    ? await ctx.profileStore.findByDid(agent.assertDid)
+    : undefined
+
   const didHandleMap = await ctx.resolver.resolveDidsToHandles(
     statuses.map((s) => s.authorDid)
   )
@@ -56,6 +60,7 @@ export default async function Page() {
       didHandleMap={didHandleMap}
       profile={profile}
       myStatus={myStatus}
+      myProfile={myProfile}
       currentUserDid={agent?.assertDid}
     />
   )
