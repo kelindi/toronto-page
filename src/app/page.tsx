@@ -8,9 +8,9 @@ import { Agent } from '@atproto/api'
 export default async function Page() {
   const ctx = await getContext()
   const cookieStore = await cookies()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- iron-session requires IncomingMessage-like object
   const req = { headers: { cookie: cookieStore.toString() } } as any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- iron-session requires ServerResponse-like object  
   const res = {} as any
   const session = await getIronSession<SessionData>(req, res, sessionOptions)
   
@@ -20,48 +20,28 @@ export default async function Page() {
         .then((sess) => (sess ? new Agent(sess) : null))
         .catch((err) => {
           ctx.logger.warn({ err }, 'oauth restore failed')
-          // Cannot destroy session in a server component, just return null
           return null
         })
     : null
 
-  const statuses = await ctx.statusStore.listLatest(10)
+  // Get all profiles instead of statuses
+  const profiles = await ctx.profileStore.listAll()
 
-  const myStatus = agent
-    ? await ctx.statusStore.findLatestForDid(agent.assertDid)
-    : undefined
-
-  const myProfile = agent
+  const currentUserProfile = agent
     ? await ctx.profileStore.findByDid(agent.assertDid)
     : undefined
 
   const didHandleMap = await ctx.resolver.resolveDidsToHandles(
-    statuses.map((s) => s.authorDid)
+    profiles.map((p) => p.authorDid)
   )
-
-  let profile: { displayName?: string } | undefined
-  if (agent) {
-    const profileRes = await agent.com.atproto.repo
-      .getRecord({
-        repo: agent.assertDid,
-        collection: 'app.bsky.actor.profile',
-        rkey: 'self',
-      })
-      .catch(() => undefined)
-    const record = profileRes?.data
-    if (record && record.value && typeof record.value === 'object') {
-      profile = { displayName: ((record.value as {displayName?: string}).displayName) }
-    }
-  }
 
   return (
     <HomePage
-      statuses={statuses}
+      profiles={profiles}
       didHandleMap={didHandleMap}
-      profile={profile}
-      myStatus={myStatus}
-      myProfile={myProfile}
+      currentUserProfile={currentUserProfile}
       currentUserDid={agent?.assertDid}
+      isLoggedIn={!!agent}
     />
   )
 }

@@ -3,90 +3,48 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import ProfileEditor, { type TorontoProfile } from './ProfileEditor'
-
-export type Status = {
-  uri: string
-  authorDid: string
-  status: string
-  createdAt: string
-  indexedAt: string
-}
+import Image from 'next/image'
 
 interface HomePageProps {
-  statuses: Status[]
+  profiles: TorontoProfile[]
   didHandleMap: Record<string, string>
-  profile?: { displayName?: string }
-  myStatus?: Status
-  myProfile?: TorontoProfile
+  currentUserProfile?: TorontoProfile
   currentUserDid?: string
+  isLoggedIn: boolean
 }
 
-// Available status emoji options
-const STATUS_OPTIONS = [
-  '👍', '👎', '💙', '🥹', '😧', '🙃', '😉', '😎', 
-  '🤓', '🤨', '🥳', '😭', '😤', '🤯', '🫡', '💀', 
-  '✊', '🤘', '👀', '🧠', '👩‍💻', '🧑‍💻', '🥷', '🧌', 
-  '🦋', '🚀'
-]
-
 export default function HomePage({
-  statuses,
+  profiles,
   didHandleMap,
-  profile,
-  myStatus,
-  myProfile,
+  currentUserProfile,
   currentUserDid,
+  isLoggedIn,
 }: HomePageProps) {
-  const router = useRouter()
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false)
-
-  const handleStatusClick = async (status: string) => {
-    try {
-      const response = await fetch('/api/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ status }),
-      })
-      
-      if (response.ok) {
-        // Give the server a moment to process the update
-        setTimeout(() => {
-          router.refresh()
-        }, 100)
-      } else {
-        console.error('Failed to update status:', response.statusText)
-      }
-    } catch (error) {
-      console.error('Error updating status:', error)
-    }
-  }
 
   return (
     <div id="root">
-      <div className="error"></div>
-      
       <Header />
       
       <div className="container">
-        <UserSessionCard 
-          profile={profile} 
-          torontoProfile={myProfile}
-          onEditProfile={() => setIsProfileEditorOpen(true)}
-        />
-        <StatusSelector 
-          statusOptions={STATUS_OPTIONS}
-          currentStatus={myStatus?.status}
-          onStatusClick={handleStatusClick}
-        />
-        <StatusFeed 
-          statuses={statuses}
+        {isLoggedIn ? (
+          <UserSection 
+            profile={currentUserProfile}
+            onEditProfile={() => setIsProfileEditorOpen(true)}
+          />
+        ) : (
+          <LoginPrompt />
+        )}
+        
+        <ProfilesGrid 
+          profiles={profiles}
           didHandleMap={didHandleMap}
           currentUserDid={currentUserDid}
         />
       </div>
       
       <ProfileEditor
-        profile={myProfile}
+        profile={currentUserProfile}
         isOpen={isProfileEditorOpen}
         onClose={() => setIsProfileEditorOpen(false)}
       />
@@ -97,196 +55,190 @@ export default function HomePage({
 function Header() {
   return (
     <div id="header">
-      <h1>Statusphere</h1>
-      <p>Set your status on the Atmosphere.</p>
+      <div className="header-logo">
+        <Image src="https://www.toronto.inc/logo.svg" alt="Toronto.inc" width={200} height={50} />
+      </div>
+      
+      <p className="header-intro">&quot;DISCOVER&quot; c/o TORONTO™</p>
+      
+      <p>
+      <ol className="header-list">
+        <li>A directory of creators, builders and innovators in Toronto</li>
+        <li>Connect with collaborators working at the intersection of art, design & tech</li>
+      </ol>
+      </p>
+      
+      <p className="header-description">
+        We&apos;re bringing together the next generation of Toronto&apos;s creative community - designers,
+        developers, artists and entrepreneurs.
+      </p>
+      
+      <p className="header-cta">
+        &quot;CREATE YOUR PROFILE&quot; - THE FUTURE IS WAITING.
+      </p>
     </div>
   )
 }
 
-function UserSessionCard({ 
+function UserSection({ 
   profile,
-  torontoProfile,
   onEditProfile
 }: { 
-  profile?: { displayName?: string }
-  torontoProfile?: TorontoProfile
+  profile?: TorontoProfile
   onEditProfile: () => void
 }) {
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const handleLogout = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogout = async () => {
     setIsLoggingOut(true)
-    
     try {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          // Redirect to home page and refresh to show logged out state
-          router.push('/')
-          router.refresh()
-        } else {
-          console.error('Logout failed:', data.error || 'Unknown error')
-          setIsLoggingOut(false)
-        }
-      } else {
-        console.error('Logout failed:', response.statusText)
-        setIsLoggingOut(false)
-      }
+      await fetch('/api/logout', { method: 'POST' })
+      router.push('/login')
     } catch (error) {
-      console.error('Error during logout:', error)
+      console.error('Error logging out:', error)
       setIsLoggingOut(false)
     }
   }
 
-  if (profile) {
-    return (
-      <div className="card">
-        <div className="session-form">
-          <div>
-            Hi, <strong>{profile.displayName || torontoProfile?.name || 'friend'}</strong>. What&apos;s your status today?
-            {torontoProfile && (
-              <div className="toronto-profile-preview">
-                <p><strong>{torontoProfile.name}</strong> {torontoProfile.neighbourhood && `• ${torontoProfile.neighbourhood}`}</p>
-                <p>{torontoProfile.bio}</p>
-                <p><strong>Working on:</strong> {torontoProfile.currentProject}</p>
-                <div className="interests">
-                  {torontoProfile.interests.slice(0, 3).map((interest, i) => (
-                    <span key={i} className="interest-tag">{interest}</span>
-                  ))}
-                  {torontoProfile.interests.length > 3 && <span className="interest-tag">+{torontoProfile.interests.length - 3} more</span>}
-                </div>
-              </div>
-            )}
-          </div>
-          <div>
-            <button 
-              type="button" 
-              onClick={onEditProfile}
-              style={{ marginRight: '8px' }}
-            >
-              {torontoProfile ? 'Edit Profile' : 'Create Profile'}
-            </button>
-            <button 
-              type="button" 
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              style={{ opacity: isLoggingOut ? 0.6 : 1 }}
-            >
-              {isLoggingOut ? 'Logging out...' : 'Log out'}
-            </button>
-          </div>
+  return (
+    <div className="card user-section">
+      <div className="user-actions">
+        <div className="user-info">
+          {profile ? (
+            <div>
+              <h3>Welcome back, {profile.name}!</h3>
+            </div>
+          ) : (
+            <div>
+              <h3>Create your Toronto profile</h3>
+              <p><p>A NETWORK OF VISIONARIES, MAKERS & CULTURAL ARCHITECTS. JOIN THE MOVEMENT.</p></p>
+            </div>
+          )}
         </div>
+        <div className="action-buttons">
+          <button onClick={onEditProfile}>
+            {profile ? 'Edit Profile' : 'Create Profile'}
+          </button>
+          <button 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="secondary"
+          >
+            {isLoggingOut ? 'Logging out...' : 'Log out'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LoginPrompt() {
+  return (
+    <div className="card login-prompt">
+      <div className="prompt-content">
+        <p>A NETWORK OF VISIONARIES, MAKERS & CULTURAL ARCHITECTS. JOIN THE MOVEMENT.</p>
+        <a href="/login" className="button">Sign in to create your profile</a>
+      </div>
+    </div>
+  )
+}
+
+function ProfilesGrid({ 
+  profiles, 
+  didHandleMap, 
+  currentUserDid 
+}: { 
+  profiles: TorontoProfile[]
+  didHandleMap: Record<string, string>
+  currentUserDid?: string
+}) {
+  if (profiles.length === 0) {
+    return (
+      <div className="empty-state">
+        <h3>No profiles yet</h3>
+        <p>Be the first to create a Toronto profile!</p>
       </div>
     )
   }
 
   return (
-    <div className="card">
-      <div className="session-form">
-        <div>
-          <a href="/login">Log in</a> to set your status!
-        </div>
-        <div>
-          <a href="/login" className="button">Log in</a>
-        </div>
+    <div className="profiles-section">
+      <h2>Directory:</h2>
+      <div className="profiles-grid">
+        {profiles.map((profile) => (
+          <ProfileCard
+            key={profile.uri}
+            profile={profile}
+            handle={didHandleMap[profile.authorDid] || profile.authorDid}
+            isCurrentUser={currentUserDid === profile.authorDid}
+          />
+        ))}
       </div>
     </div>
   )
 }
 
-interface StatusSelectorProps {
-  statusOptions: string[]
-  currentStatus?: string
-  onStatusClick: (status: string) => void
-}
-
-function StatusSelector({ statusOptions, currentStatus, onStatusClick }: StatusSelectorProps) {
-  return (
-    <div className="status-options">
-      {statusOptions.map((status) => (
-        <button
-          key={status}
-          className={currentStatus === status ? 'status-option selected' : 'status-option'}
-          onClick={() => onStatusClick(status)}
-        >
-          {status}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-interface StatusFeedProps {
-  statuses: Status[]
-  didHandleMap: Record<string, string>
-  currentUserDid?: string
-}
-
-function StatusFeed({ statuses, didHandleMap, currentUserDid }: StatusFeedProps) {
-  return (
-    <>
-      {statuses.map((status, index) => (
-        <StatusLine
-          key={status.uri}
-          status={status}
-          handle={didHandleMap[status.authorDid] || status.authorDid}
-          isFirst={index === 0}
-          currentUserDid={currentUserDid}
-        />
-      ))}
-    </>
-  )
-}
-
-interface StatusLineProps {
-  status: Status
+function ProfileCard({ 
+  profile, 
+  handle, 
+  isCurrentUser 
+}: { 
+  profile: TorontoProfile
   handle: string
-  isFirst: boolean
-  currentUserDid?: string
-}
-
-function StatusLine({ status, handle, isFirst, currentUserDid }: StatusLineProps) {
-  const date = formatStatusDate(status)
-  const isToday = date === new Date().toDateString()
-  const isCurrentUser = currentUserDid === status.authorDid
-  
+  isCurrentUser: boolean
+}) {
   return (
-    <div className={isFirst ? 'status-line no-line' : 'status-line'}>
-      <div>
-        <div className="status">{status.status}</div>
+    <div className={`profile-card ${isCurrentUser ? 'current-user' : ''}`}>
+      <div className="profile-header">
+        <h3>{profile.name}</h3>
+        {profile.neighbourhood && (
+          <span className="neighbourhood">{profile.neighbourhood}</span>
+        )}
+        {isCurrentUser && <span className="you-badge">You</span>}
       </div>
-      <div className="desc">
-        <a className="author" href={toBskyLink(handle)}>
+      
+      <p className="bio">{profile.bio}</p>
+      
+      <div className="current-project">
+        <strong>Currently working on:</strong>
+        <p>{profile.currentProject}</p>
+      </div>
+      
+      <div className="interests">
+        {profile.interests.slice(0, 5).map((interest, i) => (
+          <span key={i} className="interest-tag">{interest}</span>
+        ))}
+        {profile.interests.length > 5 && (
+          <span className="interest-tag more">+{profile.interests.length - 5} more</span>
+        )}
+      </div>
+      
+      <div className="profile-links">
+        {profile.websiteUrl && (
+          <a href={profile.websiteUrl} target="_blank" rel="noopener noreferrer">
+            Website
+          </a>
+        )}
+        {profile.githubUrl && (
+          <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
+            GitHub
+          </a>
+        )}
+        {profile.twitterUrl && (
+          <a href={profile.twitterUrl} target="_blank" rel="noopener noreferrer">
+            Twitter
+          </a>
+        )}
+        {profile.linkedinUrl && (
+          <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
+            LinkedIn
+          </a>
+        )}
+        <a href={`https://bsky.app/profile/${handle}`} target="_blank" rel="noopener noreferrer">
           @{handle}
         </a>
-        {isCurrentUser && <span style={{ fontWeight: 'bold', color: '#0078ff' }}> (You)</span>}
-        {' '}
-        {isToday 
-          ? `is feeling ${status.status} today`
-          : `was feeling ${status.status} on ${date}`
-        }
       </div>
     </div>
   )
-}
-
-function toBskyLink(handle: string): string {
-  return `https://bsky.app/profile/${handle}`
-}
-
-function formatStatusDate(status: Status): string {
-  const createdAt = new Date(status.createdAt)
-  const indexedAt = new Date(status.indexedAt)
-  const relevantDate = createdAt < indexedAt ? createdAt : indexedAt
-  return relevantDate.toDateString()
 }

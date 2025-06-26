@@ -1,12 +1,10 @@
 import pino from 'pino'
 import type { OAuthClient } from '@atproto/oauth-client-node'
-import { Firehose } from '@atproto/sync'
 import {
   createBidirectionalResolver,
   createIdResolver,
   type BidirectionalResolver,
 } from './id-resolver'
-import { createIngester } from './ingester'
 import { createClient } from '../auth/client'
 import { createStatusStore, type StatusStore } from './status-store'
 import { createProfileStore, type ProfileStore } from './profile-store'
@@ -14,7 +12,6 @@ import { createProfileStore, type ProfileStore } from './profile-store'
 export type AppContext = {
   statusStore: StatusStore
   profileStore: ProfileStore
-  ingester: Firehose
   logger: pino.Logger
   oauthClient: OAuthClient
   resolver: BidirectionalResolver
@@ -28,10 +25,8 @@ async function createContext(): Promise<AppContext> {
   const baseIdResolver = createIdResolver()
   const statusStore = createStatusStore()
   const profileStore = createProfileStore()
-  const ingester = createIngester(statusStore, baseIdResolver)
   const resolver = createBidirectionalResolver(baseIdResolver)
-  ingester.start()
-  return { statusStore, profileStore, ingester, logger, oauthClient, resolver }
+  return { statusStore, profileStore, logger, oauthClient, resolver }
 }
 
 export async function getContext(): Promise<AppContext> {

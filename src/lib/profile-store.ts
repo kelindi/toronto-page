@@ -55,6 +55,7 @@ export function createProfileStore(): ProfileStore {
 
     async update(did: string, profileData: Partial<Profile>) {
       const db = getDatabase()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic object with varying database column types
       const updateData: any = {}
       
       if (profileData.name) updateData.name = profileData.name
@@ -112,10 +113,10 @@ export function createProfileStore(): ProfileStore {
       const results = await db
         .selectFrom('profile')
         .selectAll()
-        .orderBy('createdAt', 'desc')
+        .orderBy('created_at', 'desc')
         .execute()
       
-      return results
+      return results.map(transformDbToProfile)
     },
 
     async listByNeighbourhood(neighbourhood: string) {
@@ -124,10 +125,10 @@ export function createProfileStore(): ProfileStore {
         .selectFrom('profile')
         .selectAll()
         .where('neighbourhood', '=', neighbourhood)
-        .orderBy('createdAt', 'desc')
+        .orderBy('created_at', 'desc')
         .execute()
       
-      return results
+      return results.map(transformDbToProfile)
     },
 
     async searchByInterests(interests: string[]) {
@@ -141,10 +142,10 @@ export function createProfileStore(): ProfileStore {
           )
           return eb.or(conditions)
         })
-        .orderBy('createdAt', 'desc')
+        .orderBy('created_at', 'desc')
         .execute()
       
-      return results
+      return results.map(transformDbToProfile)
     },
   }
 } 

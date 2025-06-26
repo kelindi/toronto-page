@@ -7,7 +7,7 @@ import {
   ValidationError,
   type ValidationResult,
 } from '@atproto/lexicon'
-import { type $Typed, is$typed, maybe$typed } from './util'
+import { is$typed, maybe$typed } from './util'
 
 export const schemaDict = {
   IncTorontoDiscoverBetaProfile: {
@@ -102,32 +102,6 @@ export const schemaDict = {
       },
     },
   },
-  XyzStatusphereStatus: {
-    lexicon: 1,
-    id: 'xyz.statusphere.status',
-    defs: {
-      main: {
-        type: 'record',
-        key: 'tid',
-        record: {
-          type: 'object',
-          required: ['status', 'createdAt'],
-          properties: {
-            status: {
-              type: 'string',
-              minLength: 1,
-              maxGraphemes: 1,
-              maxLength: 32,
-            },
-            createdAt: {
-              type: 'string',
-              format: 'datetime',
-            },
-          },
-        },
-      },
-    },
-  },
 } as const satisfies Record<string, LexiconDoc>
 export const schemas = Object.values(schemaDict) satisfies LexiconDoc[]
 export const lexicons: Lexicons = new Lexicons(schemas)
@@ -162,5 +136,4 @@ export function validate(
 
 export const ids = {
   IncTorontoDiscoverBetaProfile: 'inc.toronto.discover.beta.profile',
-  XyzStatusphereStatus: 'xyz.statusphere.status',
 } as const
